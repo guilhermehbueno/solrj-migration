@@ -14,7 +14,9 @@
 		$.ajax({
 			  'url': 'http://localhost:8983/solr/version5/select',
 			  'data': {'wt':'json', 'q':param},
-			  'success': function(data) { alert(data)},
+			  'success': function(data) { 
+				  alert(data.response.numFound)
+				  },
 			  'dataType': 'jsonp',
 			  'jsonp': 'json.wrf'
 			});
