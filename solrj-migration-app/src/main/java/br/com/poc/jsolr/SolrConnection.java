@@ -15,7 +15,11 @@ public class SolrConnection {
 	private static Map<String, HttpSolrServer> conns = new HashMap<String, HttpSolrServer>();
 	
 	    public static HttpSolrServer getSolrConnection(String url) throws Exception {
-	    	if(conns.containsKey(url)){
+	    	return getSolrConnection(url, false);
+	    }
+	    
+	    public static HttpSolrServer getSolrConnection(String url, boolean force) throws Exception {
+	    	if(conns.containsKey(url) && force){
 	    		return conns.get(url);
 	    	}
 	    	
@@ -28,5 +32,6 @@ public class SolrConnection {
 	            conns.put(url, server);
 	        return server;
 	    }
+
 
 }

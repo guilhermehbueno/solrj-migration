@@ -19,31 +19,27 @@ import org.apache.solr.servlet.SolrRequestParsers;
 public class SolrMigration {
 	
 	private int migrateInterval=1000;
-	private long total=1;
+	private long total=0;
 	
 	private static final String FROM = "http://localhost:8983/solr/version0";
 	private static final String TO = "http://localhost:8983/solr/version5";
 	
-	private static final String PARAMS = "fl=id,productId,availability_1,name,reviewRate,defaultProductVariant,commercialConditionId,canReceiveDiscount,hasAggregatedServices,isVisible,imageTags,skuDocuments,skuPriceSheet,productCluster,productClusterHighLight,productClusterSearchable,brand,department,directCategory,linkId,listPrice,price,parcelasCalculadas,gtin,totalReview,complement_1,complement_2,complement_3&start=0&qt=dismax";
+	private static final String PARAMS = "fl=id,productId,availability_1,name,reviewRate,defaultProductVariant,commercialConditionId,canReceiveDiscount,hasAggregatedServices,isVisible,imageTags,skuDocuments,skuPriceSheet,productCluster,productClusterHighLight,productClusterSearchable,brand,department,directCategory,linkId,listPrice,price,parcelasCalculadas,gtin,totalReview,complement_1,complement_2,complement_3&qt=dismax";
 	
 	
 	public void migrate() throws Exception{
-		
-		SolrDocumentList docs = search();
-	    System.out.println("Documentos retornados: "+docs.size());
-	    //Collection<SolrInputDocument> documents = convertSolrDocumentList2ColleciontOfSolrInputDocument(docs);
-	    //System.out.println("Documentos convertidos: "+documents.size());
-	    //migrateWithInterval(documents);
+		SolrConnection.getSolrConnection(TO).deleteByQuery( "*:*" );
+		searchAndMigrate();
 	}
 	
 	private void migrateWithInterval(Collection<SolrInputDocument> documents) throws Exception{
 		System.out.println("Migrando "+documents.size()+ " documentos");
-		HttpSolrServer serverTo = SolrConnection.getSolrConnection(TO);
+		HttpSolrServer serverTo = SolrConnection.getSolrConnection(TO,true);
 		serverTo.add(documents);
 		serverTo.commit();
 	}
 	
-	private SolrDocumentList search() throws Exception{
+	private SolrDocumentList searchAndMigrate() throws Exception{
 		int start = 0;
 		HttpSolrServer serverFrom = SolrConnection.getSolrConnection(FROM);
 		SolrParams solrParams = SolrRequestParsers.parseQueryString(PARAMS);
@@ -55,15 +51,15 @@ public class SolrMigration {
 	    total = docs.getNumFound();
 	    convertSolrDocumentList2ColleciontOfSolrInputDocument(docs);
 	    while (start<total) {
-	    	start+=migrateInterval;
+	    	start=migrateInterval+start;
 	    	query = new SolrQuery();
 			query.set("rows", migrateInterval);
 			query.set("start", start);
 			query.add(solrParams);
 			System.out.println("Buscando a partir de: "+start +" até "+ (start+migrateInterval)+ " de um total de "+total+" documentos");
 			rsp = serverFrom.query( query );
-			docs = rsp.getResults();
-			convertSolrDocumentList2ColleciontOfSolrInputDocument(docs);
+			SolrDocumentList docs2 = rsp.getResults();
+			convertSolrDocumentList2ColleciontOfSolrInputDocument(docs2);
 		}
 	    return docs;
 	}
