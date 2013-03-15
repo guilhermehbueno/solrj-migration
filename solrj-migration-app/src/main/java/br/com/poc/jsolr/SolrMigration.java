@@ -21,8 +21,8 @@ public class SolrMigration {
 	private int migrateInterval=1000;
 	private long total=0;
 	
-	private static final String FROM = "http://localhost:8983/solr/version0";
-	private static final String TO = "http://localhost:8983/solr/version5";
+	private static final String FROM = "http://localhost:8983/solr/version5";
+	private static final String TO = "http://localhost:8983/solr/version7";
 	
 	private static final String PARAMS = "fl=id,productId,availability_1,name,reviewRate,defaultProductVariant,commercialConditionId,canReceiveDiscount,hasAggregatedServices,isVisible,imageTags,skuDocuments,skuPriceSheet,productCluster,productClusterHighLight,productClusterSearchable,brand,department,directCategory,linkId,listPrice,price,parcelasCalculadas,gtin,totalReview,complement_1,complement_2,complement_3&qt=dismax";
 	

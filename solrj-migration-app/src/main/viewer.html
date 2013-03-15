@@ -3,39 +3,103 @@
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Search Viewer</title>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js" type="text/javascript"></script>
-	 <!-- Le styles -->
+	<script src="http://jquery-xml2json-plugin.googlecode.com/svn/trunk/jquery.xml2json.js" type="text/javascript"></script>
+	<script src="http://yui.yahooapis.com/3.9.0/build/yui/yui-min.js"></script>
     <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
     <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="http://twitter.github.com/bootstrap/assets/css/docs.css" rel="stylesheet">
     <link href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css" rel="stylesheet">
+    
+    
+	<style type="text/css">
+		#termos li{
+			display: inline;
+			margin: 5px;
+			cursor: pointer;
+		}
+		
+		#termos{
+			list-style: none;
+		}
 	
+	</style>
 </head>
 <body>
 
 <script type="text/javascript">
-	function buscar(){
-		var param = $('#busca').val();
-		var uri ='?start=0&rows=20&indent=on&q='+param+'&wt=json';
-		 $('#produtos').empty();
+
+
+	$(document).ready(function() {
+	  $('#termos li').click(function(){
+		  alert('Buscando por: '+ $(this).text());
+		  $('#search').val($(this).text());
+		  searchInVersions();
+	  });
+	});
+
+	//versions URIs
+	var URIs= {
+				"v0": 'http://localhost:8983/solr/version0/select', 
+				"v5": 'http://localhost:8983/solr/version5/select',
+				"v7": 'http://localhost:8983/solr/version7/select'
+			  };
+	
+	function searchInVersions(){
+		console.log("versions:" +$("input[type='checkbox']:name=version").length);
+		var versions = $("input[type='checkbox']:name=version");
+		$.each( versions, function( key, value ) {
+			 $('#products_'+$(value).val()).empty();
+			 $('#search_description').text(' para o termo: '+$('#search').val());
+			if($(value).is(":checked")){
+				console.log('Versao selecionada: '+$(value).val());
+				busca($(value).val());
+			}
+		});
+	}
+
+	function extractCorrectImageId(imageTags){
+		var json = $.xml2json(imageTags);
+		var id = 0;
+		for (var i=0;i<json.ImageTypeImageTag.length;i++)
+		{ 
+			if(json.ImageTypeImageTag[i].imageType=='29'){
+				var tag = json.ImageTypeImageTag[i];
+				var src = $(tag+'').attr("src");
+				id=src.split('/')[3];
+			}
+		}
+		return id;
+	}
+	
+	function busca(version){
+		var param = $('#search').val();
+		 $('#products_'+version).empty();
 		$.ajax({
-			  'url': 'http://localhost:8983/solr/version5/select',
-			  'data': {'wt':'json', 'q':param},
+			  'url': URIs[version],
+			  'data': {
+				  'q':param, 
+				  'fl':'id,productId,storeId,reviewRate,isVisible,name,firstName,linkId,imageTags,price,listPrice,categoryId,department,directCategory,brand,text,specification,description,categoryKeyWords,keyWords,quantitySold,availability,totalReview,availability_*,spec_fct_*,spec_idx_*',
+				  'indent':'on',
+				  'wt':'json'
+				  },
 			  'success': function(data) { 
+				  $('#response_numFound_'+version).text(data.response.numFound);
+				  $('#responseHeader_QTime_'+version).text(data.responseHeader.QTime);
 				  	$.each( data.response.docs, function( key, value ) {
 				  		var content = "<li></li>"+
-				  		'<div class="row-fluid" style="border-bottom: 1px solid #eee;"><div class="span1"></div><div class="span2"><img src="http://imagens.walmart.com.br/arquivos/ids/'+value.productId+'" width="90" height="90" alt="343780">'+
-				  		'<p>R$ 2.499,00</p>'+
+				  		'<div class="row-fluid" style="border-bottom: 1px solid #eee;">'+
+				  		'<div class="span1"></div><div class="span2">'+
+				  		'<img src="http://imagens.walmart.com.br/arquivos/ids/'+extractCorrectImageId(value.imageTags)+'" width="90" height="90" alt="343780">'+
+				  		'<p><strong>R$ '+value.price+'</strong></p>'+
 				        '</div>'+
 				        '<div class="span8">'+
 				        '<h5>'+value.name+'</h5>'+
-				        'Category: 48 - Smartphone'+
-				        '<br>catKeyWords: Smartphone , Smartphone, Telefonia, Celular e Smartphone, Walmart'+
-            	        '<br>quantitySold:'+ 
-				          '</br>availability:'+
-				          '</br>reviewRate: -->'+
-				          '</br>totalReview:'+
+            	        '<br>quantitySold:'+ value.quantitySold +
+				          '</br>availability:'+ value.availability +
+				          '</br>reviewRate: '+ value.reviewRate +
+				          '</br>totalReview:'+ value.totalReview +
 				        '</div></div>';
-				  	  $('#produtos').append(content);
+				  	  $('#products_'+version).append(content);
 				  	});
 				  },
 			  'dataType': 'jsonp',
@@ -47,15 +111,60 @@
 
 <div class="container">
 	<div class="row">
-		<div class="span12">
-			<h2>Busca</h2>
+		<div class="span6">
+			<h2>Search</h2>
 		</div>
-		<div class="span12">
-			<form method="post">
-				<input type="text" id="busca">
-				<a onclick="buscar();" class="btn btn-info" style="cursor: pointer;">Buscar</a>
+		<div class="span6">
+			<h4>Termos</h4>
+		</div>
+	</div>
+	<div class="row">
+		<div class="span3">
+			<form>
+			  	<fieldset>
+			    <input type="text" placeholder="Buscar pelo termo..."  id="search">
+			    <span class="help-block">Selecione as versões que deseja utilizar:</span>
+			    <label class="checkbox">
+			      <input type="checkbox" name="version" value="v0" checked="checked"> Versão 0
+			    </label>
+			    <label class="checkbox">
+			      <input type="checkbox" name="version" value="v5"> Versão 5
+			    </label>
+			    <label class="checkbox">
+			      <input type="checkbox" name="version" value="v7"> Versão 7
+			    </label>
+			    <a onclick="searchInVersions();" class="btn btn-info" style="cursor: pointer;">Search</a>
+			  </fieldset>
 			</form>
 		</div>
+		<div class="span6">
+			<ul id="termos">
+				<li>	tv	</li>
+				<li>	notebook	</li>
+				<li>	celular	</li>
+				<li>	TABLET	</li>
+				<li>	iphone	</li>
+				<li>	fogao	</li>
+				<li>	bicicleta	</li>
+				<li>	NETBOOK	</li>
+				<li>	pneu	</li>
+				<li>	tv led	</li>
+				<li>	umidificador	</li>
+				<li>	microondas	</li>
+				<li>	PNEUS	</li>
+				<li>	gps	</li>
+				<li>	celulares	</li>
+				<li>	relogio	</li>
+				<li>	hd externo	</li>
+				<li>	GELADEIRA	</li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<div class="container">
+	<div class="row">
+		<h2>Statistics</h2>
 	</div>
 </div>
 
@@ -63,12 +172,65 @@
 <div class="container">
 	<div class="row">
 		<div class="span12">
-			<h2>Resultados</h2>
+			<h2>Results (<span id="search_description"></span>)</h2>
 		</div>
-		<div class="span6">
-			<ol id="produtos">
-			</ol>
+	</div>
+	<div class="row">
+		<!-- VERSAO 0 -->
+		<div class="span4">
+			<div class="row">
+				<h4>Versao 0</h4>
+			</div>
+			<div class="row">
+				<div class="span6 responseHeader">
+					<strong>QTime: </strong><span id="responseHeader_QTime_v0"></span> <br>
+					<strong>DocsFound:</strong>  <span id="response_numFound_v0"></span><br>
+				</div>
+				<div class="span4">
+				<ol id="products_v0">
+				</ol>
+				</div>
+			</div>
 		</div>
+		<!-- VERSAO 0 -->
+		
+		
+		<!-- VERSAO 5 -->
+		<div class="span4">
+			<div class="row">
+				<h4>Versao 5</h4>
+			</div>
+			<div class="row">
+				<div class="span6 responseHeader">
+					<strong>QTime: </strong><span id="responseHeader_QTime_v5"></span> <br>
+					<strong>DocsFound:</strong>  <span id="response_numFound_v5"></span><br>
+				</div>
+				<div class="span4">
+				<ol id="products_v5">
+				</ol>
+				</div>
+			</div>
+		</div>
+		<!-- VERSAO 5 -->
+		
+		
+		<!-- VERSAO 7 -->
+		<div class="span4">
+			<div class="row">
+				<h4>Versao 7</h4>
+			</div>
+			<div class="row">
+				<div class="span6 responseHeader">
+					<strong>QTime: </strong><span id="responseHeader_QTime_v7"></span> <br>
+					<strong>DocsFound:</strong>  <span id="response_numFound_v7"></span><br>
+				</div>
+				<div class="span4">
+				<ol id="products_v7">
+				</ol>
+				</div>
+			</div>
+		</div>
+		<!-- VERSAO 7 -->
 	</div>
 </div>
 
