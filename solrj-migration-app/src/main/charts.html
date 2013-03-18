@@ -22,7 +22,14 @@
 			list-style: none;
 		}
 		
-		#mychart {
+		#expectedResultsChart {
+		    margin:10px 10px 10px 10px;
+		    width:90%;
+		    max-width: 800px;
+		    height:400px;
+		}
+		
+		#geralChart {
 		    margin:10px 10px 10px 10px;
 		    width:90%;
 		    max-width: 800px;
@@ -34,15 +41,17 @@
 <body>
 
 <script>
-YUI().use('charts', function (Y) 
-		    { 
-			    var myDataValues = [ 
-			        {month:"January", internetSales: 110000, percentOfRevenue: 25, results: 1},
-			        {month:"February", internetSales: 333500, percentOfRevenue: 28, results: 50},
-			        {month:"March", internetSales: 90500, percentOfRevenue: 15, results: 25},
-			        {month:"April", internetSales: 255550, percentOfRevenue: 21, results: 100},
-			        {month:"May", internetSales: 445000, percentOfRevenue: 33, results: 40},
-			        {month:"June", internetSales: 580000, percentOfRevenue: 38, results: 11}
+YUI().use('charts', function (Y) {
+	
+
+				//Define values in chart
+				var myDataValues = [ 
+			        {month:"15/02/2013", carro: 20, iphone: 35, cadeira:0},
+			        {month:"17/02/2013", carro: 35, iphone: 55, cadeira:25},
+			        {month:"25/02/2013", carro: 40, iphone: 75, cadeira:32},
+			        {month:"01/03/2013", carro: 20, iphone: 35, cadeira:42},
+			        {month:"15/03/2013", carro: 60, iphone: 65, cadeira:56},
+			        {month:"17/03/2013", carro: 75, iphone: 85, cadeira:90}
 			    ];
 			   
 			    //Define axes and assign keys
@@ -50,33 +59,67 @@ YUI().use('charts', function (Y)
 			        percentage: {
 			            type:"numeric",
 			            position:"right",
-			            keys:["percentOfRevenue"],
+			            keys:["carro","iphone","cadeira"],
 			            labelFormat: {suffix:"%"}
-			        },
-			        sales: {
-			            type:"numeric",
-			            position:"left",
-			            keys:["internetSales"],
-			            labelFormat: {
-			                prefix:"$",
-			                thousandsSeparator:","
-			            }
 			        }
 		    };
 
 		    //Define a series collection so that we can assign nice display names
 		    var mySeries = [
-		        {type:"combo", yKey:"internetSales", yDisplayName:"Version 0", xDisplayName:"Month"},
-		        {type:"combo", yKey:"percentOfRevenue", yDisplayName:"Version 7", xDisplayName:"Month"}
+		        {type:"combo", yKey:"carro", yDisplayName:"Carro", xDisplayName:"Month"},
+		        {type:"combo", yKey:"iphone", yDisplayName:"Iphone", xDisplayName:"Month"},
+		        {type:"combo", yKey:"cadeira", yDisplayName:"Cadeira", xDisplayName:"Month"}
 		    ];
+		    
 
-		    var mychart = new Y.Chart({
+		    var expectedResultsChart = new Y.Chart({
 		                            dataProvider:myDataValues, 
 		                            categoryKey:"month", 
 		                            axes:myAxes, 
 		                            seriesCollection:mySeries, 
-		                            render:"#mychart"
+		                            render:"#expectedResultsChart",
+		                            style:
+		                    		{
+		                    			padding: 20,
+		                    			legend:
+		                    			{
+		                    				display: "right",
+		                    				padding: 10,
+		                    				spacing: 5,
+		                    				font:
+		                    				{
+		                    					family: "Arial",
+		                    					size: 13
+		                    				}
+		                    			}
+		                    		}
+
 		                        });
+		    
+		    var geralChart = new Y.Chart({
+                dataProvider:myDataValues, 
+                categoryKey:"month", 
+                axes:myAxes, 
+                seriesCollection:mySeries, 
+                render:"#geralChart",
+                style:
+        		{
+        			padding: 20,
+        			legend:
+        			{
+        				display: "right",
+        				padding: 10,
+        				spacing: 5,
+        				font:
+        				{
+        					family: "Arial",
+        					size: 13
+        				}
+        			}
+        		}
+
+            });
+		    
 		});
 </script>
 
@@ -218,8 +261,59 @@ YUI().use('charts', function (Y)
 
 <div class="container">
 	<div class="row">
-		<h2>Statistics</h2>
-		<div id="mychart"></div>
+			<div class="span12">
+				<h2>Statistics</h2>
+			</div>
+			<div class="span8">
+				<h4>Porcentagem de resultados esperados que apareceram entre os 5 primeiros resultados</h4>
+				<div id="expectedResultsChart"></div>
+			</div>
+			<div class="span4">
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>Data:</th>
+							<th>Descrição:</th>
+						</tr>
+					</thead>
+					
+					<tr>
+						<td>15/02/2013</td>
+						<td>Inclusão de sinônimos</td>
+					</tr>
+					
+					<tr>
+						<td>17/02/2013</td>
+						<td>Removendo campo description da busca</td>
+					</tr>
+					
+					<tr>
+						<td>25/02/2013</td>
+						<td>Removendo Stemming</td>
+					</tr>
+					
+					<tr>
+						<td>01/03/2013</td>
+						<td>Incluindo sinônimos para carro</td>
+					</tr>
+					
+					<tr>
+						<td>15/03/2013</td>
+						<td>Incluindo sinônimos para iphone</td>
+					</tr>
+					
+					<tr>
+						<td>17/03/2013</td>
+						<td>Incluindo sinônimos para cadeira</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="span8">
+				<h4>Resultado geral com base na execução de todos os termos</h4>
+				<div id="geralChart"></div>
+			</div>
+			
 	</div>
 </div>
 
